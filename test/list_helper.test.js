@@ -1,6 +1,11 @@
-const { test, describe } = require('node:test')
+const { test, describe, after } = require('node:test')
 const assert = require('node:assert')
 const listHelper = require('../utils/list_helper')
+const mongoose = require('mongoose')
+const supertest = require('supertest')
+const app = require('../app')
+
+const api = supertest(app)
 
 test('dummy returns one', () => {
   const blogs = []
@@ -82,8 +87,9 @@ describe('total likes', () => {
   })
 })
 
-describe('favorite blog', () => {
 
+describe('favorite blog', () => {
+  
   test('when list is empty, returns null', () => {
     const result = listHelper.favoriteBlog([])
     assert.strictEqual(result, null)
@@ -103,4 +109,18 @@ describe('favorite blog', () => {
     assert.deepStrictEqual(result, expected)
   })
 
+})
+
+test('idIdentifier returns the id of a blog', async () => {
+  const blogPosts = await api.get('/api/blogs')
+  blogPosts.body.forEach(blog => {
+    assert.strictEqual(typeof blog.id, 'string') // Should have 'id' property
+    assert.strictEqual(blog._id, undefined)  // Should not have _id
+  })
+})
+
+
+
+after(async () => {
+  await mongoose.connection.close()
 })
