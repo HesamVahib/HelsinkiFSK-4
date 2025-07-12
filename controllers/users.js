@@ -3,7 +3,12 @@ const usersRouter = require('express').Router()
 const User = require('../models/user')
 
 usersRouter.get('/', async (request, response) => {
-  const users = await User.find({}).populate('blogs')
+  const users = await User.find({}).populate('blogs', {
+    url: 1,
+    title: 1,
+    author: 1
+  })
+  // const users = await User.find({})
   if (!users) {
     return response.status(404).json({ error: 'No users found' })
   }
@@ -37,6 +42,15 @@ usersRouter.post('/', async (request, response) => {
   const savedUser = await user.save()
 
   response.status(201).json(savedUser)
+})
+
+usersRouter.delete('/:id', async (request, response) => {
+  const userId = request.params.id
+  const deletedUser = await User.findByIdAndDelete(userId)
+  if (!deletedUser) {
+    return response.status(404).json({ error: 'User not found' })
+  }
+  response.status(204).end('User deleted successfully')
 })
 
 module.exports = usersRouter

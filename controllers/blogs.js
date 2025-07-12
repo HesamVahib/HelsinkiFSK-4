@@ -12,7 +12,11 @@ const getTokenFrom = request => {
 }
 
 blogsRouter.get('/', async (request, response) => {
-  const blogs = await Blog.find({})
+  const blogs = await Blog.find({}).populate('user', {
+    username: 1,
+    name: 1
+  })
+
   if (!blogs) {
     return response.status(404).json({ error: 'No blogs found' })
   }
@@ -27,16 +31,17 @@ blogsRouter.post('/', async (request, response) => {
     return response.status(401).json({ error: 'token invalid' })
   }
 
-  // const user = await User.findById(body.userId)
-  // if (!user) {
-  //   return response.status(400).json({ error: 'User not found' })
-  // }
+  const user = await User.findById(decodeToken.id)
+  if (!user) {
+    return response.status(400).json({ error: 'User not found' })
+  }
 
   const blog = new Blog({
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes || 0
+    likes: body.likes || 0,
+    user: user._id
   })
 
   if (!blog.title || !blog.url) {
@@ -44,8 +49,8 @@ blogsRouter.post('/', async (request, response) => {
   }
 
   const savedBlog = await blog.save()
-  // user.blogs = user.blogs.concat(savedBlog._id)
-  // await user.save()
+  user.blogs = user.blogs.concat(savedBlog._id)
+  await user.save()
 
   response.status(201).json(savedBlog)
 })
